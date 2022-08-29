@@ -9,7 +9,7 @@ import math
 
 def canny_points(edges, points_num=100):
     h, w = edges.shape
-    print(h, w)
+    # print(h, w)
 
     count = 0
     edges_sample = np.zeros((h, w))
@@ -155,20 +155,20 @@ def oriented_shape_bins(points, image=None):
     for point_o in points_out[:]:       # 制作oriented shape context bins
         distances = []
         angle = []
-        point_o = point_o-point_refrence    # 得到方向
+        vector_o = point_o-point_refrence    # 得到方向
         for point in points_out[:]:     # 计算周围点的角度
-            point = point-point_refrence
+            vector = np.array(point_o)-np.array(point)
             distance = np.sqrt((point_o[0] - point[0]) ** 2 + (point_o[1] - point[1]) ** 2)
             if distance > 0.00001:
                 distances.append(distance)
-                angl = np.arcsin((point_o[0] - point[0]) / distance)
-                angl = math.atan2(point)
-                if point_o[1] - point[1] < 0 and point_o[0] - point[0] > 0:
-                    angl = angl + pi / 2
-                if point_o[1] - point[1] < 0 and point_o[0] - point[0] < 0:
-                    angl = angl - pi / 2
-                if angl < 0:
-                    angl = 2 * pi + angl
+                # angl = np.arcsin((point_o[0] - point[0]) / distance)
+                angl = math.atan2(vector[0], vector[1])-math.atan2(vector_o[0], vector_o[1])
+                if angl>pi:
+                    angl = angl-2*pi
+                elif angl<-pi:
+                    angl = angl+2*pi
+                if angl<0:
+                    angl = 2*pi+angl
                 angle.append(np.floor(6.0 * angl / pi))  # sin(angle/(2pi/12))
                 # print(distance,angl)
         mean_dist = np.mean(distances)
@@ -235,9 +235,9 @@ def cost_matrix(bins_A, bins_B, frameedge_A, frameedge_B):
 if __name__ =="__main__":
     pi = 3.1415926535
     sample_num = 100
-    imageA_path = 'BM.png'
+    imageA_path = 'B.png'
     #imageB_path = 'back_2.png'
-    imageB_path = 'B.png'
+    imageB_path = 'BM.png'
 
     # read images A and B
     imageA = cv2.imread(imageA_path)
@@ -284,7 +284,7 @@ if __name__ =="__main__":
         #print('(%d, %d) -> %d' % (row, column, value))
     print('total cost: %d' % total)
 
-    if total < 750:
+    if total < 1000:
         print('Same shape!')
     else:
         print('Not the Same shape')
