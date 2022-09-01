@@ -96,40 +96,30 @@ def find_farthest_point(points):
 
     return np.array([int(points[maxindex][0]), int(points[maxindex][1])]), maxindex
 
+
 def creatMSTMap(points):
     in_tree_array = [0]
-    N = len(points)
     out_tree_array = [i for i in range(1, len(points))]
+    N = len(points)
     map = np.zeros((N, N))
     points = np.float32(points)
-    kdtree = cv2.flann.Index()
-    params = dict(algorithm=1, trees=1)
-    kdtree.build(points, params)
-    indices, dists = kdtree.knnSearch(points, points.shape[0], params=-1)
-    while len(out_tree_array)>0:
+    N_out = N-1
+    while(len(out_tree_array) != 0):
         min_distance = 100000000
         min_index1 = -1
         min_index2 = -1
-        search_indices = indices[out_tree_array, :]
-        search_dists = dists[out_tree_array, :]
-        for i in range(len(search_indices)):
-            for k in range(1, N):
-                if search_indices[i][k] in in_tree_array and search_dists[i][k]<min_distance:
-                    min_distance = search_dists[i][k]
+        for i in in_tree_array:
+            for k in range(N_out):
+                distance = np.sqrt(np.sum((points[i]-points[out_tree_array[k]])**2))
+                if distance < min_distance:
+                    min_distance = distance
                     min_index1 = i
-                    min_index2 = search_indices[i][k]
-                    continue
-        map[min_index2][out_tree_array[min_index1]] = 1
-        in_tree_array.append(out_tree_array[min_index1])
-        del out_tree_array[min_index1]
-    # print(np.sum(map, axis=0))
+                    min_index2 = k
+        map[min_index1][out_tree_array[min_index2]] = 1
+        in_tree_array.append(out_tree_array[min_index2])
+        del out_tree_array[min_index2]
+        N_out = N_out-1
     return map
-        # min_index = np.argmin(search_dist)
-        #in_tree_array.append(min_out)
-        #out_tree_array = out_tree_array[:min_out] + out_tree_array[min_out+1:]
-        #map[min_in][min_out] = 1
-
-
 
 def oriented_shape_bins(points, image=None):
     point_refrence, index_refrence = find_farthest_point(points)    # 查找refrence points
@@ -147,7 +137,8 @@ def oriented_shape_bins(points, image=None):
         cv2.imshow("try", image)
         cv2.waitKey()
     # 从原点集中去掉refrence points
-    # MST_map = creatMSTMap(points_out) # 生成一个MST map（按照原论文说法，不生成应该问题也不大）
+    MST_map = creatMSTMap(points_out) # 生成一个MST map（按照原论文说法，不生成应该问题也不大）
+
     N = len(points_out)
     bins_all = []
     ang_Block = 12
